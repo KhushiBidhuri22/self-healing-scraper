@@ -13,7 +13,18 @@ def test_parse_product():
     </html>
     """
 
-    result = parse_product(html)
+    selectors = {
+        "version": 1,
+        "fields": {
+            "name": ".product-name",
+            "price": ".price",
+        },
+    }
+
+    result = parse_product(
+        html,
+        selectors,
+    )
 
     assert result["name"] == "Full Cream Milk"
     assert result["price"] == "$4.50"

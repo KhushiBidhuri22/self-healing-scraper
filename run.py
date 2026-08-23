@@ -6,8 +6,7 @@ from app.healer import heal_selector
 from app.selector_registry import load_selectors
 
 
-HTML_FILE = Path("fixtures/raw/test_product.html")
-
+HTML_FILE = Path("fixtures/chaos/rename_class.html")
 
 def load_html() -> str:
     return HTML_FILE.read_text(encoding="utf-8")

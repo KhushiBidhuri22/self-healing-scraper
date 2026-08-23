@@ -3,10 +3,14 @@ from bs4 import BeautifulSoup
 from app.selector_registry import load_selectors
 
 
-def parse_product(html: str) -> dict:
+def parse_product(
+    html: str,
+    selectors: dict | None = None,
+) -> dict:
     soup = BeautifulSoup(html, "lxml")
 
-    selectors = load_selectors()
+    if selectors is None:
+        selectors = load_selectors()
 
     name_selector = selectors["fields"]["name"]
     price_selector = selectors["fields"]["price"]
