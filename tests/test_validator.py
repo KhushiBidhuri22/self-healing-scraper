@@ -1,4 +1,8 @@
-from app.validator import detect_drift
+from app.validator import detect_drift, invalid_price
+from app.validator import (
+    detect_drift,
+    invalid_price,
+)
 
 
 def test_healthy_data_has_no_drift():
@@ -58,3 +62,14 @@ def test_invalid_price_triggers_drift():
 
     assert result["drift"] is True
     assert "price" in result["fields"]
+
+def test_price_with_comma_decimal_is_valid():
+    assert invalid_price("4,50 USD") is False
+
+
+def test_price_with_dollar_is_valid():
+    assert invalid_price("$4.50") is False
+
+
+def test_price_with_thousands_separator_is_valid():
+    assert invalid_price("1,250.50") is False

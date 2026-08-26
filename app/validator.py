@@ -35,7 +35,17 @@ def invalid_price(value: object) -> bool:
     if not isinstance(value, str):
         return True
 
-    cleaned = value.replace("$", "").replace(",", "").strip()
+    cleaned = value.strip().upper()
+
+    cleaned = cleaned.replace("$", "")
+    cleaned = cleaned.replace("USD", "")
+    cleaned = cleaned.strip()
+
+    if "," in cleaned and "." not in cleaned:
+        cleaned = cleaned.replace(",", ".")
+
+    else:
+        cleaned = cleaned.replace(",", "")
 
     try:
         price = float(cleaned)
@@ -43,7 +53,6 @@ def invalid_price(value: object) -> bool:
         return True
 
     return price <= 0 or price > 10000
-
 
 def detect_drift(records: list[dict]) -> dict:
     if not records:

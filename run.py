@@ -4,9 +4,11 @@ from app.parser import parse_product
 from app.validator import detect_drift
 from app.healer import heal_selector
 from app.selector_registry import load_selectors
+from app.golden import load_golden
 
 
 HTML_FILE = Path("fixtures/chaos/rename_class.html")
+
 
 def load_html() -> str:
     return HTML_FILE.read_text(encoding="utf-8")
@@ -15,12 +17,16 @@ def load_html() -> str:
 def main():
     print("=== Self-Healing Scraper ===")
 
+    # 1. Load HTML
     print("\n[1] Loading HTML...")
     html = load_html()
 
+    # 2. Load selectors and golden data
     print("[2] Loading selectors...")
     selectors = load_selectors()
+    golden = load_golden()
 
+    # 3. Parse product
     print("[3] Parsing product...")
 
     record = parse_product(html)
@@ -32,6 +38,7 @@ def main():
     print(f"    Price: {record['price']}")
     print(f"    Selector version: {record['selector_version']}")
 
+    # 4. Validate
     print("\n[4] Validating...")
 
     validation = detect_drift(records)
@@ -44,15 +51,20 @@ def main():
     print("    🚨 Drift detected")
     print(f"    Broken fields: {validation['fields']}")
 
-    if "name" in validation["fields"]:
-        print("\n[5] Attempting name selector repair...")
+    # 5. Attempt repairs
+    for field in validation["fields"]:
+        print(f"\n[5] Attempting {field} selector repair...")
 
-        expected_name = "Full Cream Milk"
+        expected_value = golden.get(field)
+
+        if expected_value is None:
+            print(f"    ❌ No golden value found for {field}")
+            continue
 
         result = heal_selector(
             html=html,
-            field="name",
-            expected_value=expected_name,
+            field=field,
+            expected_value=expected_value,
             current_selectors=selectors,
         )
 

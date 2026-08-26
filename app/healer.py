@@ -3,6 +3,7 @@ from app.scorer import score_candidate
 from app.selector_promoter import promote_selector
 from app.repair_logger import log_repair
 
+
 PROMOTION_THRESHOLD = 90
 
 
@@ -12,6 +13,7 @@ def heal_selector(
     expected_value: str,
     current_selectors: dict,
 ) -> dict:
+
     candidates = generate_candidates(html, field)
 
     scored_candidates = []
@@ -36,6 +38,7 @@ def heal_selector(
         key=lambda candidate: candidate["score"],
     )
 
+    # Safety check 1: minimum score
     if best_candidate["score"] < PROMOTION_THRESHOLD:
         return {
             "healed": False,
@@ -43,8 +46,17 @@ def heal_selector(
             "best_candidate": best_candidate,
         }
 
+    # Safety check 2: candidate must actually match golden value
+    if not best_candidate["matched"]:
+        return {
+            "healed": False,
+            "reason": "Candidate failed golden-value validation",
+            "best_candidate": best_candidate,
+        }
+
     old_selector = current_selectors["fields"].get(field)
 
+    # Only promote AFTER validation succeeds.
     promoted = promote_selector(
         current_selectors,
         field,
@@ -52,21 +64,21 @@ def heal_selector(
     )
 
     repair = log_repair(
-    field=field,
-    old_selector=old_selector,
-    new_selector=best_candidate["selector"],
-    score=best_candidate["score"],
-    evidence=best_candidate["reasons"],
-    new_version=promoted["version"],
-)
+        field=field,
+        old_selector=old_selector,
+        new_selector=best_candidate["selector"],
+        score=best_candidate["score"],
+        evidence=best_candidate["reasons"],
+        new_version=promoted["version"],
+    )
 
     return {
-    "healed": True,
-    "field": field,
-    "old_selector": old_selector,
-    "new_selector": best_candidate["selector"],
-    "score": best_candidate["score"],
-    "evidence": best_candidate["reasons"],
-    "new_version": promoted["version"],
-    "repair": repair,
-}
+        "healed": True,
+        "field": field,
+        "old_selector": old_selector,
+        "new_selector": best_candidate["selector"],
+        "score": best_candidate["score"],
+        "evidence": best_candidate["reasons"],
+        "new_version": promoted["version"],
+        "repair": repair,
+    }
