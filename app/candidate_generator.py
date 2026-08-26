@@ -16,5 +16,5 @@ def generate_candidates(html: str, field: str) -> list[str]:
 
             candidates.append(element.name)
 
-    # Remove duplicates while preserving order
+    
     return list(dict.fromkeys(candidates))

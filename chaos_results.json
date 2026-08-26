@@ -1,0 +1,16 @@
+{
+    "total_mutations": 8,
+    "recovered": 6,
+    "failed": 2,
+    "recovery_rate": 75.0,
+    "mutations": {
+        "rename_class": "recovered",
+        "add_wrapper": "recovered",
+        "reorder_children": "recovered",
+        "change_price_format": "recovered",
+        "drop_attributes": "recovered",
+        "lazy_load": "failed",
+        "remove_price": "failed",
+        "change_name_tag": "recovered"
+    }
+}

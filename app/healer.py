@@ -1,5 +1,6 @@
 from app.candidate_generator import generate_candidates
 from app.scorer import score_candidate
+from app.replay import replay_candidate
 from app.selector_promoter import promote_selector
 from app.repair_logger import log_repair
 
@@ -14,6 +15,7 @@ def heal_selector(
     current_selectors: dict,
 ) -> dict:
 
+    
     candidates = generate_candidates(html, field)
 
     scored_candidates = []
@@ -27,18 +29,20 @@ def heal_selector(
 
         scored_candidates.append(result)
 
+   
     if not scored_candidates:
         return {
             "healed": False,
             "reason": "No candidates generated",
         }
 
+  
     best_candidate = max(
         scored_candidates,
         key=lambda candidate: candidate["score"],
     )
 
-    # Safety check 1: minimum score
+  
     if best_candidate["score"] < PROMOTION_THRESHOLD:
         return {
             "healed": False,
@@ -46,17 +50,24 @@ def heal_selector(
             "best_candidate": best_candidate,
         }
 
-    # Safety check 2: candidate must actually match golden value
-    if not best_candidate["matched"]:
+
+    replay = replay_candidate(
+        html=html,
+        selector=best_candidate["selector"],
+        expected_value=expected_value,
+    )
+
+    if not replay["passed"]:
         return {
             "healed": False,
-            "reason": "Candidate failed golden-value validation",
+            "reason": f"Replay validation failed: {replay['reason']}",
             "best_candidate": best_candidate,
+            "replay": replay,
         }
 
+    
     old_selector = current_selectors["fields"].get(field)
 
-    # Only promote AFTER validation succeeds.
     promoted = promote_selector(
         current_selectors,
         field,
@@ -81,4 +92,5 @@ def heal_selector(
         "evidence": best_candidate["reasons"],
         "new_version": promoted["version"],
         "repair": repair,
+        "replay": replay,
     }

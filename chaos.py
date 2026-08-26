@@ -95,3 +95,11 @@ def remove_price_element(html: str) -> str:
         element.decompose()
 
     return str(soup)
+
+def change_name_tag(html: str) -> str:
+    soup = BeautifulSoup(html, "lxml")
+
+    for element in soup.select(".product-name"):
+        element.name = "div"
+
+    return str(soup)
