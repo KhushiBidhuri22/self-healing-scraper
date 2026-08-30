@@ -13,6 +13,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.get("/")
+def root():
+    return {
+        "name": "Self-Healing E-Commerce Scraper",
+        "status": "ok",
+        "docs": "/docs"
+    }
+
 
 @app.get("/items")
 def get_items(
