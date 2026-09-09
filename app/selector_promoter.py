@@ -10,6 +10,13 @@ def promote_selector(
     field: str,
     new_selector: str,
 ) -> dict:
+
+    current_selector = current_selectors["fields"].get(field)
+
+    # Do not create a new version if nothing actually changed.
+    if current_selector == new_selector:
+        return current_selectors
+
     current_version = current_selectors["version"]
     new_version = current_version + 1
 
@@ -20,9 +27,19 @@ def promote_selector(
 
     new_selectors["fields"][field] = new_selector
 
-    output_file = SELECTOR_DIRECTORY / f"v{new_version}.json"
+    SELECTOR_DIRECTORY.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
-    with output_file.open("w", encoding="utf-8") as file:
+    output_file = (
+        SELECTOR_DIRECTORY / f"v{new_version}.json"
+    )
+
+    with output_file.open(
+        "w",
+        encoding="utf-8",
+    ) as file:
         json.dump(
             new_selectors,
             file,

@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "fields": {
-    "name": ".product-name",
-    "price": ".price"
-  }
-}

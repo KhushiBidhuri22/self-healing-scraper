@@ -30,3 +30,21 @@ def test_promote_selector(tmp_path, monkeypatch):
     version_file = Path(tmp_path) / "v2.json"
 
     assert version_file.exists()
+
+def test_promote_selector_does_not_create_duplicate_version():
+
+    selectors = {
+        "version": 3,
+        "fields": {
+            "name": ".title",
+            "price": ".price",
+        },
+    }
+
+    result = promote_selector(
+        selectors,
+        "name",
+        ".title",
+    )
+
+    assert result == selectors

@@ -22,10 +22,11 @@ def heal_selector(
 
     for candidate in candidates:
         result = score_candidate(
-            html,
-            candidate,
-            expected_value,
-        )
+          html,
+          candidate,
+          expected_value,
+          field,
+      )
 
         scored_candidates.append(result)
 
@@ -84,13 +85,14 @@ def heal_selector(
     )
 
     return {
-        "healed": True,
-        "field": field,
-        "old_selector": old_selector,
-        "new_selector": best_candidate["selector"],
-        "score": best_candidate["score"],
-        "evidence": best_candidate["reasons"],
-        "new_version": promoted["version"],
-        "repair": repair,
-        "replay": replay,
-    }
+    "healed": True,
+    "field": field,
+    "old_selector": old_selector,
+    "new_selector": best_candidate["selector"],
+    "score": best_candidate["score"],
+    "evidence": best_candidate["reasons"],
+    "new_version": promoted["version"],
+    "selectors": promoted,
+    "repair": repair,
+    "replay": replay,
+}

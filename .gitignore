@@ -1,7 +1,20 @@
-.venv/
+
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+
+
+.venv/
+venv/
+
+
 .pytest_cache/
-.env
+
+
 logs/*.jsonl
 
+
+selectors/v*.json
+
+
+!selectors/v1.json
