@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+<title>Self-Healing Scraper</title>
+
+<link rel="stylesheet" href="style.css">
+
+
+</head>
+
+<body>
+
+
+<div class="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">✦</div>
+
+            <div>
+                <h1>Self-Healing</h1>
+                <p>Scraper Engine</p>
+            </div>
+        </div>
+
+        <nav>
+            <button class="nav-item active">
+                <span>◉</span>
+                Dashboard
+            </button>
+
+            <button class="nav-item">
+                <span>▣</span>
+                Products
+            </button>
+
+            <button class="nav-item">
+                <span>⚙</span>
+                Repairs
+            </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="connection">
+                <span class="status-dot"></span>
+                <div>
+                    <strong>API Connected</strong>
+                    <small>Render deployment</small>
+                </div>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">SCRAPER MONITORING</p>
+                <h2>System Overview</h2>
+            </div>
+
+            <button class="refresh-btn" onclick="loadDashboard()">
+                ↻ Refresh
+            </button>
+
+        </header>
+
+
+        <!-- Health Hero -->
+        <section class="health-card">
+
+            <div class="health-info">
+
+                <div class="health-label">
+                    <span class="status-dot"></span>
+                    SYSTEM HEALTH
+                </div>
+
+                <div class="health-value" id="healthScore">
+                    --%
+                </div>
+
+                <p id="healthStatus">
+                    Checking scraper health...
+                </p>
+
+            </div>
+
+            <div class="health-ring">
+                <div class="ring-inner">
+                    <span id="healthRingValue">--%</span>
+                    <small>HEALTH</small>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- Stats -->
+        <section class="stats-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-icon">▦</div>
+
+                <div>
+                    <p>Products</p>
+                    <h3 id="productCount">--</h3>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">↻</div>
+
+                <div>
+                    <p>Repairs</p>
+                    <h3 id="repairCount">--</h3>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">✓</div>
+
+                <div>
+                    <p>Selector Version</p>
+                    <h3 id="selectorVersion">--</h3>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Products + Repairs -->
+        <section class="content-grid">
+
+
+            <!-- Products -->
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <p class="eyebrow">DATA OUTPUT</p>
+                        <h3>Products</h3>
+                    </div>
+
+                    <span class="badge" id="productBadge">
+                        Loading
+                    </span>
+
+                </div>
+
+                <div id="productsList" class="products-list">
+
+                    <div class="loading">
+                        Loading products...
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Repairs -->
+            <div class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <p class="eyebrow">SELF-HEALING</p>
+                        <h3>Repair History</h3>
+                    </div>
+
+                    <span class="badge" id="repairBadge">
+                        Loading
+                    </span>
+
+                </div>
+
+                <div id="repairsList" class="repairs-list">
+
+                    <div class="loading">
+                        Loading repairs...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Self Healing Explanation -->
+        <section class="pipeline-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <p class="eyebrow">AUTOMATED RECOVERY</p>
+                    <h3>Self-Healing Pipeline</h3>
+                </div>
+
+            </div>
+
+
+            <div class="pipeline">
+
+                <div class="pipeline-step">
+                    <span>01</span>
+                    <strong>Detect</strong>
+                    <small>Find scraper drift</small>
+                </div>
+
+                <div class="pipeline-arrow">→</div>
+
+                <div class="pipeline-step">
+                    <span>02</span>
+                    <strong>Generate</strong>
+                    <small>Find candidates</small>
+                </div>
+
+                <div class="pipeline-arrow">→</div>
+
+                <div class="pipeline-step">
+                    <span>03</span>
+                    <strong>Score</strong>
+                    <small>Evaluate evidence</small>
+                </div>
+
+                <div class="pipeline-arrow">→</div>
+
+                <div class="pipeline-step">
+                    <span>04</span>
+                    <strong>Replay</strong>
+                    <small>Validate repair</small>
+                </div>
+
+                <div class="pipeline-arrow">→</div>
+
+                <div class="pipeline-step">
+                    <span>05</span>
+                    <strong>Promote</strong>
+                    <small>Restore health</small>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <footer>
+            Self-Healing E-Commerce Scraper · API v1.0.0
+        </footer>
+
+    </main>
+
+</div>
+
+
+<script src="script.js"></script>
+
+
+</body>
+</html>
