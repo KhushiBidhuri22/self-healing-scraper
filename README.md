@@ -6,6 +6,9 @@ Traditional scrapers are fragile: a small HTML change such as renaming a CSS cla
 
 This project treats scraper failures as **recoverable drift**.
 
+* Deployed Link -https://self-healing-scraper-1.onrender.com
+* Docs Link -https://self-healing-scraper-1.onrender.com/docs?
+
 ---
 
 ##  The Problem
