@@ -1,217 +1,380 @@
-# Self-Healing E-Commerce Scraper
+#  Self-Healing E-Commerce Scraper
 
-A fault-tolerant web scraping system that detects DOM drift, automatically searches for replacement CSS selectors, validates candidate repairs against known-good data, and promotes successful selectors without requiring manual code changes.
+A resilient web scraping system that can **detect broken selectors, automatically discover replacement selectors, validate the repair, and promote the repaired selector** without requiring manual code changes.
 
-##  Live Demo
+Traditional scrapers are fragile: a small HTML change such as renaming a CSS class can silently break data extraction.
 
-**API:** https://self-healing-scraper-1.onrender.com
-
-**Swagger / API Docs:** https://self-healing-scraper-1.onrender.com/docs
-
-**GitHub:** https://github.com/KhushiBidhuri22/self-healing-scraper
+This project treats scraper failures as **recoverable drift**.
 
 ---
 
-## Problem
+##  The Problem
 
-Traditional web scrapers depend on fixed CSS selectors.
+Websites frequently change their HTML structure.
+
+For example, a scraper may originally use:
+
+```css
+.product-name
+```
+
+But after a website update, the same product name may become:
+
+```css
+.title
+```
+
+A traditional scraper returns:
+
+```text
+Product: None
+```
+
+and requires a developer to manually inspect the website and update the selector.
+
+### Our approach
+
+Instead of stopping at the failure, the system:
+
+1. Detects the broken field
+2. Generates alternative selectors
+3. Scores candidates using multiple signals
+4. Replays the candidate against the expected value
+5. Promotes the best valid selector
+6. Logs the repair
+7. Re-runs the scraper
+8. Confirms that scraper health has been restored
+
+---
+
+#  How It Works
+
+```text
+             HTML PAGE
+                 │
+                 ▼
+        ┌─────────────────┐
+        │     Parser      │
+        └────────┬────────┘
+                 │
+                 ▼
+        ┌─────────────────┐
+        │ Health / Drift  │
+        │    Detection    │
+        └────────┬────────┘
+                 │
+          Drift detected
+                 │
+                 ▼
+        ┌─────────────────┐
+        │    Candidate    │
+        │    Generator    │
+        └────────┬────────┘
+                 │
+                 ▼
+        ┌─────────────────┐
+        │     Scorer      │
+        └────────┬────────┘
+                 │
+          Best candidate
+                 │
+                 ▼
+        ┌─────────────────┐
+        │ Replay / Verify │
+        └────────┬────────┘
+                 │
+          Validation passed
+                 │
+                 ▼
+        ┌─────────────────┐
+        │    Selector     │
+        │    Promoter     │
+        └────────┬────────┘
+                 │
+                 ▼
+        ┌─────────────────┐
+        │  Repair Logger  │
+        └────────┬────────┘
+                 │
+                 ▼
+          HEALTH RESTORED
+```
+
+---
+
+#  Key Features
+
+###  Drift Detection
+
+Detects when required fields stop producing valid values.
+
+Example:
+
+```text
+Product name → None
+Price         → $4.50
+```
+
+The system identifies:
+
+```text
+Broken fields: ['name']
+```
+
+---
+
+###  Automatic Candidate Generation
+
+When a selector fails, the system searches the HTML for alternative selectors using:
+
+* Semantic class names
+* Field-specific hints
+* HTML tags
+* `data-testid` attributes
+* More specific selector combinations
 
 For example:
 
 ```text
 .product-name
-.price
-```
-
-When a website changes its HTML structure or class names, the scraper can silently stop extracting data.
-
-This project treats selector failure as **recoverable drift**.
-
-Instead of immediately failing, the system:
-
-1. Detects broken or invalid extraction results.
-2. Generates alternative selectors from the current DOM.
-3. Scores candidates using multiple signals.
-4. Compares candidates against known-good ("golden") values.
-5. Promotes a high-confidence replacement selector.
-6. Versions the updated selector configuration.
-7. Records the repair as an auditable JSONL event.
-
----
-
-##  Architecture
-
-```text
-                    HTML
-                     │
-                     ▼
-              ┌─────────────┐
-              │   Parser    │
-              └──────┬──────┘
-                     │
-                     ▼
-              ┌─────────────┐
-              │  Validator  │
-              └──────┬──────┘
-                     │
-              DOM drift detected
-                     │
-                     ▼
-          ┌─────────────────────┐
-          │ Candidate Generator │
-          └──────────┬──────────┘
-                     │
-                     ▼
-              ┌─────────────┐
-              │    Scorer   │
-              └──────┬──────┘
-                     │
-              confidence threshold
-                     │
-                     ▼
-          ┌─────────────────────┐
-          │ Selector Promoter   │
-          └──────────┬──────────┘
-                     │
-             versioned selector
-                     │
-                     ▼
-              ┌─────────────┐
-              │ Repair Log  │
-              └─────────────┘
+.title
+h2.title
 ```
 
 ---
 
-##  Core Components
+###  Candidate Scoring
 
-### Parser
+Candidates are evaluated using multiple pieces of evidence:
 
-Extracts product fields using the currently active selector configuration.
+* Expected/golden value match
+* Selector uniqueness
+* Selector specificity
+* Semantic relationship to the field
 
-### Validator
+A strong candidate can reach:
 
-Detects extraction drift using:
+```text
+Score: 100
+```
 
-* null-rate thresholds
-* invalid-name detection
-* invalid-price detection
-* field-level drift reporting
+---
 
-### Candidate Generator
+###  Replay Validation
 
-Searches the current DOM for alternative selectors when an existing selector breaks.
+The candidate is not automatically accepted.
 
-### Candidate Scorer
+The system first replays the candidate selector against the HTML and verifies that it actually produces the expected value.
 
-Ranks candidate selectors using evidence such as:
+This prevents weak or incorrect selectors from being promoted.
 
-* expected value match
-* unique element match
-* selector specificity
+---
 
-A candidate must reach the configured promotion threshold before it can replace the existing selector.
+###  Selector Promotion
 
-### Selector Promoter
-
-Writes successful repairs as a new selector version.
+Once a candidate passes validation, it becomes the new active selector.
 
 Example:
 
 ```text
-v1 → v2
-.product-name → .title
+Old selector: .product-name
+New selector: .title
+New version: 2
 ```
 
-### Repair Logger
+---
 
-Every successful repair is stored in:
+###  Health Engine
+
+The project also evaluates scraper health at the field level.
+
+Each field receives a health score based on the percentage of valid records.
+
+Possible overall states:
 
 ```text
-logs/repairs.jsonl
+healthy
+degraded
+critical
 ```
 
+This allows the system to monitor scraper quality rather than simply checking whether the program crashed.
+
+---
+
+###  Multi-Product Parsing
+
+The parser supports multiple products on the same page.
+
 Example:
+
+```text
+1. Full Cream Milk — $4.50
+2. Toned Milk      — $3.80
+3. Organic Milk    — $5.20
+```
+
+---
+
+###  Repair Logging
+
+Successful repairs are recorded so that selector changes can be audited later.
+
+Repair information includes:
+
+* Field
+* Old selector
+* New selector
+* Candidate score
+* Evidence
+* New selector version
+
+---
+
+#  Example: Self-Healing in Action
+
+The original selector configuration contains:
 
 ```json
 {
-  "field": "name",
-  "old_selector": ".product-name",
-  "new_selector": ".title",
-  "score": 100,
-  "new_version": 2
+  "name": ".product-name",
+  "price": ".price"
 }
 ```
 
-This makes selector repairs auditable and reproducible.
+The website changes:
 
----
+```html
+<h2 class="title">Full Cream Milk</h2>
+```
 
-##  Chaos Testing
-
-The project includes deliberate DOM mutations to simulate real scraper failures.
-
-Current chaos scenarios include:
-
-| Mutation                | Result            |
-| ----------------------- | ----------------- |
-| Rename class            |  Recovered       |
-| Add wrapper             |  Recovered       |
-| Reorder children        |  Recovered       |
-| Change price format     |  Recovered       |
-| Drop attributes         |  Recovered       |
-| Lazy-load/remove fields |  Safely rejected |
-| Remove price element    |  Safely rejected |
-| Change name tag         |  Recovered       |
-
-### Current recovery result
-
-**6 / 8 mutations recovered — 75% recovery rate**
-
-The two failed cases intentionally demonstrate an important safety property: when the required source data is actually removed from the DOM, the system does not fabricate a replacement value.
-
----
-
-##  Test Coverage
-
-The project currently passes:
+The scraper initially produces:
 
 ```text
-25 passed
+Product: None
+Price: $4.50
 ```
 
-Test coverage includes:
+The health system detects:
 
-* parser behavior
-* validator behavior
-* selector candidate generation
-* candidate scoring
-* selector healing
-* selector promotion
-* repair logging
-* golden-data validation
-* replay behavior
-* chaos mutations
+```text
+Drift detected
+Broken fields: ['name']
+```
 
-Run the test suite with:
+The healing system searches for candidates and identifies:
 
-```bash
-python -m pytest
+```text
+.title
+```
+
+The candidate matches the expected golden value:
+
+```text
+Full Cream Milk
+```
+
+After replay validation:
+
+```text
+Repair successful
+Old selector: .product-name
+New selector: .title
+Score: 100
+New version: 2
+```
+
+The scraper is executed again:
+
+```text
+Product: Full Cream Milk
+Price: $4.50
+Selector version: 2
+
+HEALTH RESTORED
 ```
 
 ---
 
-##  Running Locally
+#  Project Structure
 
-Create and activate a virtual environment:
+```text
+self-healing-scraper/
+│
+├── app/
+│   ├── baseline.py
+│   ├── candidate_generator.py
+│   ├── golden.py
+│   ├── healer.py
+│   ├── health_engine.py
+│   ├── parser.py
+│   ├── repair_logger.py
+│   ├── replay.py
+│   ├── scraper.py
+│   ├── scorer.py
+│   ├── selector_promoter.py
+│   ├── selector_registry.py
+│   ├── store.py
+│   ├── validator.py
+│   └── __init__.py
+│
+├── fixtures/
+│   ├── chaos/
+│   │   └── rename_class.html
+│   │
+│   └── golden/
+│       ├── expected.json
+│       ├── multi_product.html
+│       └── multi_product_expected.json
+│
+├── selectors/
+│   └── v1.json
+│
+├── tests/
+│   ├── test_baseline.py
+│   ├── test_candidate_generator.py
+│   ├── test_chaos.py
+│   ├── test_end_to_end.py
+│   ├── test_golden.py
+│   ├── test_healer.py
+│   ├── test_health_engine.py
+│   ├── test_multi_product_parser.py
+│   ├── test_parser.py
+│   ├── test_repair_logger.py
+│   ├── test_replay.py
+│   ├── test_scorer.py
+│   ├── test_scraper.py
+│   ├── test_selector_promoter.py
+│   └── test_validator.py
+│
+├── api.py
+├── run.py
+├── metrics.py
+├── metrics.md
+├── requirements.txt
+└── README.md
+```
+
+---
+
+#  Installation
+
+Clone the repository:
+
+```bash
+git clone <your-repository-url>
+cd self-healing-scraper
+```
+
+Create a virtual environment:
 
 ```bash
 python -m venv .venv
 ```
 
-Windows:
+Activate it on Windows:
 
-```powershell
+```bash
 .venv\Scripts\activate
 ```
 
@@ -221,31 +384,71 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Run the scraper demonstration:
+---
+
+# ▶ Run the Self-Healing Demo
+
+Run:
 
 ```bash
 python run.py
 ```
 
-Run chaos testing:
+A successful repair looks like:
 
-```bash
-python chaos_runner.py
+```text
+=== Self-Healing Scraper ===
+
+[1] Loading HTML...
+[2] Loading selectors...
+    Starting selector version: 1
+
+[3] Parsing products...
+    Products found: 1
+    1. None — $4.50
+
+[4] Validating...
+     Drift detected
+    Broken fields: ['name']
+
+[5] Attempting name selector repair...
+     Repair successful
+    Old selector: .product-name
+    New selector: .title
+    Score: 100
+    New version: 2
+
+[6] Verifying repaired scraper...
+    Products found: 1
+    1. Full Cream Milk — $4.50
+     HEALTH RESTORED
+
+=== Finished ===
 ```
 
-Run tests:
+---
+
+#  API
+
+The project also exposes a FastAPI interface.
+
+Start the API with:
 
 ```bash
-python -m pytest
+uvicorn api:app --reload
 ```
 
-Run the API:
+Available endpoints:
 
-```bash
-python -m uvicorn api:app --host 127.0.0.1 --port 8000
-```
+| Endpoint  | Purpose                               |
+| --------- | ------------------------------------- |
+| `/`       | API information                       |
+| `/items`  | Retrieve scraped products             |
+| `/drift`  | View repair/drift information         |
+| `/health` | API health check                      |
+| `/docs`   | Interactive Swagger API documentation |
 
-Then open:
+The interactive API documentation is available at:
 
 ```text
 http://127.0.0.1:8000/docs
@@ -253,74 +456,77 @@ http://127.0.0.1:8000/docs
 
 ---
 
-##  Deployment
+#  Testing
 
-The API is deployed using Render.
-
-Production start command:
+Run the complete test suite:
 
 ```bash
-uvicorn api:app --host 0.0.0.0 --port $PORT
+python -m pytest
 ```
 
-Live service:
-
-https://self-healing-scraper-1.onrender.com
-
----
-
-##  Design Philosophy
-
-The system follows a conservative repair strategy:
-
-> **Detect → Search → Score → Validate → Promote → Log**
-
-It does not automatically accept every possible selector.
-
-A replacement must provide sufficient evidence before it is promoted. When the source data itself disappears, the system fails safely rather than inventing data.
-
----
-
-##  Example Repair
-
-Original HTML:
-
-```html
-<h2 class="product-name">Full Cream Milk</h2>
-```
-
-Existing selector:
-
-```css
-.product-name
-```
-
-After a simulated website change:
-
-```html
-<h2 class="title">Full Cream Milk</h2>
-```
-
-The original selector fails.
-
-The healing pipeline identifies:
-
-```css
-.title
-```
-
-as a high-confidence replacement:
+Current test result:
 
 ```text
-Score: 100
-
-Old selector: .product-name
-New selector: .title
-Version: 2
+45 passed
 ```
 
-The repair is persisted and logged.
+The test suite covers:
+
+* Parsing
+* Multi-product extraction
+* Candidate generation
+* Candidate scoring
+* Drift detection
+* Health scoring
+* Replay validation
+* Selector promotion
+* Repair logging
+* Scraper input
+* End-to-end self-healing
 
 ---
 
+#  Chaos Testing
+
+The project includes intentionally broken HTML fixtures.
+
+For example:
+
+```text
+fixtures/chaos/rename_class.html
+```
+
+The fixture simulates a real-world website change where a selector becomes invalid.
+
+This allows the self-healing pipeline to be tested deterministically.
+
+---
+
+#  Design Principle
+
+The system does **not** blindly replace broken selectors.
+
+A selector must provide enough evidence to be considered a valid repair.
+
+The repair pipeline is:
+
+```text
+Detect
+  ↓
+Generate
+  ↓
+Score
+  ↓
+Replay
+  ↓
+Promote
+  ↓
+Log
+  ↓
+Verify
+```
+
+This makes selector healing safer and more explainable than simply choosing the first element that looks correct.
+
+---
 
