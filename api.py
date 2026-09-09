@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 from fastapi import FastAPI, Query
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.store import load_items
 from app.scraper import fetch_html
 from app.parser import parse_products
@@ -18,6 +18,14 @@ from metrics import calculate_metrics
 app = FastAPI(
     title="Self-Healing Scraper API",
     version="1.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
