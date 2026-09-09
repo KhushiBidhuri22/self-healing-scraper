@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
 
-from app.parser import parse_product
+from app.parser import parse_products
 from app.validator import detect_drift
 from app.healer import heal_selector
 from app.golden import load_golden
+from app.scraper import fetch_html
 
 
 HTML_FILE = Path("fixtures/chaos/rename_class.html")
@@ -12,7 +13,7 @@ STARTING_SELECTOR_FILE = Path("selectors/v1.json")
 
 
 def load_html() -> str:
-    return HTML_FILE.read_text(encoding="utf-8")
+    return fetch_html(HTML_FILE)
 
 
 def load_starting_selectors() -> dict:
@@ -40,25 +41,30 @@ def main():
         f"{selectors['version']}"
     )
 
-    # 3. Parse
-    print("\n[3] Parsing product...")
+    # 3. Parse products
+    print("\n[3] Parsing products...")
 
-    record = parse_product(
+    records = parse_products(
         html,
         selectors=selectors,
     )
 
-    print(f"    Product: {record['name']}")
-    print(f"    Price: {record['price']}")
     print(
-        f"    Selector version: "
-        f"{record['selector_version']}"
+        f"    Products found: "
+        f"{len(records)}"
     )
 
-    # 4. Validate
+    for index, record in enumerate(records, start=1):
+        print(
+            f"    {index}. "
+            f"{record['name']} — "
+            f"{record['price']}"
+        )
+
+    # 4. Validate entire dataset
     print("\n[4] Validating...")
 
-    validation = detect_drift([record])
+    validation = detect_drift(records)
 
     if not validation["drift"]:
         print("     No drift detected")
@@ -128,26 +134,28 @@ def main():
 
         selectors = result["selectors"]
 
-        repaired_record = parse_product(
+        repaired_records = parse_products(
             html,
             selectors=selectors,
         )
 
         print(
-            f"    Product: "
-            f"{repaired_record['name']}"
-        )
-        print(
-            f"    Price: "
-            f"{repaired_record['price']}"
-        )
-        print(
-            f"    Selector version: "
-            f"{repaired_record['selector_version']}"
+            f"    Products found: "
+            f"{len(repaired_records)}"
         )
 
+        for index, record in enumerate(
+            repaired_records,
+            start=1,
+        ):
+            print(
+                f"    {index}. "
+                f"{record['name']} — "
+                f"{record['price']}"
+            )
+
         repaired_validation = detect_drift(
-            [repaired_record]
+            repaired_records
         )
 
         if not repaired_validation["drift"]:
